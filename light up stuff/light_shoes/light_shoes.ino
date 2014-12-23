@@ -33,6 +33,7 @@ const int toe_pin = A0;  // toe pressure sensor
 const int heel_pin = A1;  // toe pressure sensor
 const int battery_pin = A4; //voltage divider for battery
 const int ledPin = 13;
+//pin for LED strip data line is D6
 
 const int thresh_toe = 400;
 const int thresh_heel = 400;
