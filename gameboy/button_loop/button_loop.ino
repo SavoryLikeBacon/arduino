@@ -45,23 +45,15 @@ int low_voltage = 10;
 
 void setup() {
   
-  button[0].pin = 6; // Select pin
-  button[1].pin = 7; //  Start pin
-  button[2].pin = 9; //  A pin
-  button[3].pin = 8; //  B pin
-  button[4].pin = 3; //  Up pin
-  button[5].pin = 4; //  Down pin
-  button[6].pin = 2; //  Left pin
-  button[7].pin = 5; //  Right pin
   
-//  button[0].pin = 2; // Select pin
-//  button[1].pin = 3; //  Start pin
-//  button[2].pin = 4; //  A pin
-//  button[3].pin = 5; //  B pin
-//  button[4].pin = 6; //  Up pin
-//  button[5].pin = 7; //  Down pin
-//  button[6].pin = 8; //  Left pin
-//  button[7].pin = 9; //  Right pin
+  button[0].pin = 2; // Select pin
+  button[1].pin = 3; //  Start pin
+  button[2].pin = 4; //  A pin
+  button[3].pin = 5; //  B pin
+  button[4].pin = 6; //  Up pin
+  button[5].pin = 7; //  Down pin
+  button[6].pin = 8; //  Left pin
+  button[7].pin = 9; //  Right pin
  
   button[0].state = false;
   button[1].state = false;
@@ -72,23 +64,23 @@ void setup() {
   button[6].state = false;
   button[7].state = false;
 
-  button[0].key = KEY_RIGHT_SHIFT; // select key
-  button[1].key = KEY_RETURN; // start key
-  button[2].key = 'z'; // a key
-  button[3].key = 'x'; // s key
+  button[0].key = 128; // select key
+  button[1].key = 17; // start key
+  button[2].key = 65; // a key
+  button[3].key = 83; // s key
   button[4].key = 218; // up key
   button[5].key = 217; // down key
   button[6].key = 216; // left key
   button[7].key = 215; // right key
   
-  Keyboard.begin();
+  
   Serial.begin(9600);
   // initialize digital pin 13 as an output.
   for (int i = 0; i < 8; i ++){
       pinMode(button[i].pin, INPUT);
       digitalWrite(button[i].pin, HIGH);       // turn on pullup resistors
   }
-  //Keyboard.begin();
+ //Keyboard.begin();
 }
 
 // the loop function runs over and over again forever
@@ -116,10 +108,10 @@ void loop() {
 
 void check_btn(int pin){
 
- _DBG1(   Serial.print("Check function. State: ") ); // debug code
- _DBG1(   Serial.print(button[pin].state) ); // debug code
- _DBG1(   Serial.print("  Pin: ") ); // debug code
- _DBG1(   Serial.println(button[pin].pin) ); // debug code
+ _DBG1( Serial.print("Check function. State: ") ); // debug code
+ _DBG1( Serial.print(button[pin].state) ); // debug code
+ _DBG1( Serial.print("  Pin: ") ); // debug code
+ _DBG1( Serial.println(button[pin].pin) ); // debug code
 
   if ( !button[pin].state ){
       //trigger when button is pressed
