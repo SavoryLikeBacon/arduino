@@ -24,6 +24,8 @@
 #endif
 
 #define DEBOUNCE 20
+#define NUMBER_OF_BUTTONS 12
+#define DIGITAL_ANALOG_THRESHOLD 500
 #include <avr/sleep.h>
 // the setup function runs once when you press reset or power the board
 
@@ -32,7 +34,7 @@ typedef struct button_type{
    boolean state;
    int key;
 } button_struct;
-button_struct button[8];
+button_struct button[NUMBER_OF_BUTTONS];
  
 //debug mask
  String temp = "";
@@ -41,7 +43,9 @@ button_struct button[8];
 int battery_pin = 2; // analog input for battery
   
   //alert outputs
-int low_voltage = 10; 
+int low_voltage = 14; 
+int please_shutdown = 15; 
+
 
 void setup() {
   
@@ -54,15 +58,11 @@ void setup() {
   button[6].pin = 2; //  Left pin
   button[7].pin = 5; //  Right pin
   
-//  button[0].pin = 2; // Select pin
-//  button[1].pin = 3; //  Start pin
-//  button[2].pin = 4; //  A pin
-//  button[3].pin = 5; //  B pin
-//  button[4].pin = 6; //  Up pin
-//  button[5].pin = 7; //  Down pin
-//  button[6].pin = 8; //  Left pin
-//  button[7].pin = 9; //  Right pin
- 
+  button[8].pin = 10; //  right shoulder 1
+  button[9].pin = 16; //  right shoulder 2
+
+  
+
   button[0].state = false;
   button[1].state = false;
   button[2].state = false;
@@ -71,6 +71,11 @@ void setup() {
   button[5].state = false;
   button[6].state = false;
   button[7].state = false;
+  
+  button[8].state = false;
+  button[9].state = false;
+
+
 
   button[0].key = KEY_RIGHT_SHIFT; // select key
   button[1].key = KEY_RETURN; // start key
@@ -81,13 +86,27 @@ void setup() {
   button[6].key = 216; // left key
   button[7].key = 215; // right key
   
+  button[8].key = 's'; // 
+  button[9].key = 'R'; // 
+
+  button[10].pin = 1; //  right shoulder 1. Analog input 1
+  button[11].pin = 2; //  right shoulder 2. Analog inuput 2
+  button[10].state = false;
+  button[11].state = false;
+  button[10].key = 'a'; // 
+  button[11].key = 'L'; // 
+
+  
   Keyboard.begin();
   Serial.begin(9600);
   // initialize digital pin 13 as an output.
-  for (int i = 0; i < 8; i ++){
+  for (int i = 0; i < NUMBER_OF_BUTTONS-2; i ++){
       pinMode(button[i].pin, INPUT);
       digitalWrite(button[i].pin, HIGH);       // turn on pullup resistors
   }
+  digitalWrite(A1, HIGH); //set pullups for analog inputs
+  digitalWrite(A2, HIGH);
+  
   //Keyboard.begin();
 }
 
@@ -95,13 +114,13 @@ void setup() {
 void loop() {
   //battery_check(low_voltage);
   
-  for (int i = 0; i < 8; i ++){
+  for (int i = 0; i < NUMBER_OF_BUTTONS; i ++){
      check_btn(i);
   }
   
   #ifdef DEBUG3
     temp = "";
-    for (int i = 0; i < 8; i ++){
+    for (int i = 0; i < NUMBER_OF_BUTTONS; i ++){
      build_mask(button[i].pin);
     }  
     Serial.println("button key : SSABUDLR");
@@ -114,37 +133,71 @@ void loop() {
 }
 
 
-void check_btn(int pin){
+//void check_btn2(int index){
+//
+// _DBG1(   Serial.print("Check function. State: ") ); // debug code
+// _DBG1(   Serial.print(button[index].state) ); // debug code
+// _DBG1(   Serial.print("  Pin: ") ); // debug code
+// _DBG1(   Serial.println(button[index].pin) ); // debug code
+//
+//  if ( !button[index].state ){
+//      //trigger when button is pressed
+//     _DBG1(   Serial.println("testing press trigger")   ); // debug code
+//      if( digitalRead(button[index].pin) == LOW){
+//         button[index].state = true;
+//         //keyboard.press("a"); //press the a button
+//         Keyboard.press(button[index].key);
+//        _DBG1(   Serial.print("input ")   ); // debug code
+//        _DBG1(   Serial.print(button[index].pin)   ); // debug code
+//        _DBG1(   Serial.println(" pressed")   ); // debug code
+//         delay(DEBOUNCE); // debouce input in ms
+//      }
+//  }else{
+//      //trigger when button is released
+//     _DBG1(   Serial.println("testing release trigger")   ); // debug code
+//      if( digitalRead(button[index].pin) == HIGH){
+//         button[index].state = false;
+//         Keyboard.release(button[index].key); //release the a button
+//        _DBG1(   Serial.print("input ")   ); // debug code
+//        _DBG1(   Serial.print(button[index].pin)   ); // debug code
+//        _DBG1(   Serial.println(" released")   ); // debug code
+//         delay(DEBOUNCE); // debouce input in ms
+//      }
+//  }
+//}
 
- _DBG1(   Serial.print("Check function. State: ") ); // debug code
- _DBG1(   Serial.print(button[pin].state) ); // debug code
- _DBG1(   Serial.print("  Pin: ") ); // debug code
- _DBG1(   Serial.println(button[pin].pin) ); // debug code
+void check_btn(int index){
 
-  if ( !button[pin].state ){
+  if ( !button[index].state ){
       //trigger when button is pressed
-     _DBG1(   Serial.println("testing press trigger")   ); // debug code
-      if( digitalRead(button[pin].pin) == LOW){
-         button[pin].state = true;
+      if( pseudo_digital_read(index) == LOW){
+         button[index].state = true;
          //keyboard.press("a"); //press the a button
-         Keyboard.press(button[pin].key);
-        _DBG1(   Serial.print("input ")   ); // debug code
-        _DBG1(   Serial.print(button[pin].pin)   ); // debug code
-        _DBG1(   Serial.println(" pressed")   ); // debug code
+         Keyboard.press(button[index].key);
          delay(DEBOUNCE); // debouce input in ms
       }
   }else{
       //trigger when button is released
-     _DBG1(   Serial.println("testing release trigger")   ); // debug code
-      if( digitalRead(button[pin].pin) == HIGH){
-         button[pin].state = false;
-         Keyboard.release(button[pin].key); //release the a button
-        _DBG1(   Serial.print("input ")   ); // debug code
-        _DBG1(   Serial.print(button[pin].pin)   ); // debug code
-        _DBG1(   Serial.println(" released")   ); // debug code
+       if( pseudo_digital_read(index) == HIGH){
+         button[index].state = false;
+         Keyboard.release(button[index].key); //release the a button
          delay(DEBOUNCE); // debouce input in ms
       }
   }
+}
+
+boolean pseudo_digital_read(int index){
+   //indexs between 0 and 9 are digital inputs
+   //indexes between 10 and 11 are analog inputs being used as digital 
+   boolean temp_state = HIGH;
+   if ( (index >= 0 ) && ( index <= 9 ) )
+      temp_state = digitalRead(button[index].pin);
+   else{
+     if ( analogRead(button[index].pin) < DIGITAL_ANALOG_THRESHOLD )
+          temp_state = LOW;
+   }
+  
+   return temp_state;
 }
 
 void battery_check(int pin){
