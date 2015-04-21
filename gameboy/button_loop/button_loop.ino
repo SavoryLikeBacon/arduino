@@ -1,5 +1,5 @@
 
-//#define DEBUG1  //show button logic messages
+//a#define DEBUG1  //show button logic messages
 //#define DEBUG2 //show analof read messages
 //#define DEBUG3 // output a mask of the buttons
 
@@ -35,6 +35,7 @@ typedef struct button_type{
    int key;
 } button_struct;
 button_struct button[NUMBER_OF_BUTTONS];
+int red_led = 15;
  
 //debug mask
  String temp = "";
@@ -86,16 +87,17 @@ void setup() {
   button[6].key = 216; // left key
   button[7].key = 215; // right key
   
-  button[8].key = 's'; // 
-  button[9].key = 'R'; // 
+  button[8].key = 'L'; // 
+  button[9].key = 's'; // 
 
   button[10].pin = 1; //  right shoulder 1. Analog input 1
   button[11].pin = 2; //  right shoulder 2. Analog inuput 2
   button[10].state = false;
   button[11].state = false;
-  button[10].key = 'a'; // 
-  button[11].key = 'L'; // 
+  button[10].key = 'R'; // 
+  button[11].key = 'a'; // 
 
+  
   
   Keyboard.begin();
   Serial.begin(9600);
@@ -106,6 +108,9 @@ void setup() {
   }
   digitalWrite(A1, HIGH); //set pullups for analog inputs
   digitalWrite(A2, HIGH);
+  
+  pinMode(red_led, OUTPUT);
+  digitalWrite(red_led, HIGH);
   
   //Keyboard.begin();
 }
@@ -118,53 +123,112 @@ void loop() {
      check_btn(i);
   }
   
+  special_char();
+  
   #ifdef DEBUG3
     temp = "";
-    for (int i = 0; i < NUMBER_OF_BUTTONS; i ++){
+    for (int i = 0; i < NUMBER_OF_BUTTONS; i++){
      build_mask(button[i].pin);
     }  
-    Serial.println("button key : SSABUDLR");
+    Serial.println("button key : SSABUDLRLlRr");
     Serial.print("button mask: "); 
     Serial.println(temp);
-    delay(1000);              // wait for a second
+    Serial.println("");
+    delay(100);              // wait for a second
   #endif
   
   _DBG1(   delay(1000)   );              // wait for a second
 }
 
+void special_char(){
+  //this is the section that will compare the boolean flags and trigger special characters
+  // such as the ESC, F4, or the trigger to trigger the pi to shut down from battery or request
+   
+   
+  if ((button[8].state == true) && (button[9].state == true) && (button[10].state == true) && (button[11].state == true)){
+      //special command 1
+      //issue escape to return to main menu
+      Keyboard.write(KEY_ESC);
+      Serial.println("escape key");
+      Keyboard.releaseAll();
+      delay(1000);
+      
+  }
+  
+  if ((button[8].state == true) && (button[0].state == true) && (button[10].state == true) && (button[1].state == true)){
+      //special command 2
+      // issue F4 to return to the terminal
+     
+      Keyboard.write(KEY_ESC);
+      Serial.println("escape key");
+      Keyboard.releaseAll();
+      delay(5000);
+      
+      Keyboard.write(KEY_F4);
+      Serial.println("F4 key");
+      Keyboard.releaseAll();
+      delay(5000);
+      Keyboard.write(KEY_RETURN);
+      delay(200);
+      Keyboard.write(KEY_RETURN);
+  }
 
-//void check_btn2(int index){
-//
-// _DBG1(   Serial.print("Check function. State: ") ); // debug code
-// _DBG1(   Serial.print(button[index].state) ); // debug code
-// _DBG1(   Serial.print("  Pin: ") ); // debug code
-// _DBG1(   Serial.println(button[index].pin) ); // debug code
-//
-//  if ( !button[index].state ){
-//      //trigger when button is pressed
-//     _DBG1(   Serial.println("testing press trigger")   ); // debug code
-//      if( digitalRead(button[index].pin) == LOW){
-//         button[index].state = true;
-//         //keyboard.press("a"); //press the a button
-//         Keyboard.press(button[index].key);
-//        _DBG1(   Serial.print("input ")   ); // debug code
-//        _DBG1(   Serial.print(button[index].pin)   ); // debug code
-//        _DBG1(   Serial.println(" pressed")   ); // debug code
-//         delay(DEBOUNCE); // debouce input in ms
-//      }
-//  }else{
-//      //trigger when button is released
-//     _DBG1(   Serial.println("testing release trigger")   ); // debug code
-//      if( digitalRead(button[index].pin) == HIGH){
-//         button[index].state = false;
-//         Keyboard.release(button[index].key); //release the a button
-//        _DBG1(   Serial.print("input ")   ); // debug code
-//        _DBG1(   Serial.print(button[index].pin)   ); // debug code
-//        _DBG1(   Serial.println(" released")   ); // debug code
-//         delay(DEBOUNCE); // debouce input in ms
-//      }
-//  }
-//}
+  if ((button[8].state == true) && (button[3].state == true) && (button[10].state == true) && (button[3].state == true)){
+      //special command 3
+      // issue the shutdown command and toggle the red_led
+      Keyboard.write(KEY_ESC);
+      Serial.println("escape key");
+      Keyboard.releaseAll();
+      
+      for (int i=0; i<5; i++){
+        digitalWrite(red_led, LOW);
+        delay(500);
+        digitalWrite(red_led, HIGH);
+        delay(500);
+      }
+      
+      Keyboard.write(KEY_F4);
+      Serial.println("F4 key");
+      Keyboard.releaseAll();
+      for (int i=0; i<5; i++){
+        digitalWrite(red_led, LOW);
+        delay(500);
+        digitalWrite(red_led, HIGH);
+        delay(500);
+      }
+      Keyboard.write(KEY_RETURN);
+      delay(2000);
+           
+      
+      //Keyboard.press(KEY_LEFT_CTRL);
+      //delay(50);
+      //Keyboard.press('z');
+      //delay(200);
+      //Keyboard.write(KEY_RETURN);
+      //delay(200);
+      Keyboard.write('s');
+      Keyboard.write('u');
+      Keyboard.write('d');
+      Keyboard.write('o');
+      Keyboard.write(' ');
+      Keyboard.write('p');
+      Keyboard.write('o');
+      Keyboard.write('w');
+      Keyboard.write('e');
+      Keyboard.write('r');
+      Keyboard.write('o');
+      Keyboard.write('f');
+      Keyboard.write('f');
+      Keyboard.write(KEY_RETURN);
+      digitalWrite(red_led, LOW);
+      delay(500);
+      digitalWrite(red_led, HIGH);
+      
+       
+}
+  
+}
+
 
 void check_btn(int index){
 
