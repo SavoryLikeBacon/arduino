@@ -223,8 +223,13 @@ void special_char(){
       digitalWrite(red_led, LOW);
       delay(500);
       digitalWrite(red_led, HIGH);
+      delay(10000);
+      digitalWrite(red_led, HIGH);
       
-       
+       set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+       sleep_enable();
+       sleep_cpu();
+       sleep_mode();
 }
   
 }
