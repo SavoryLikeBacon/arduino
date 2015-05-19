@@ -5,6 +5,19 @@
 #define PIN_8 8
 #define PIN_9 9
 
+#include <PinChangeInt.h>    // http://playground.arduino.cc/Main/PinChangeInt
+#include <PinChangeIntConfig.h>
+#include <TimerOne.h>        // http://playground.arduino.cc/Code/Timer1
+
+#define NO_PORTB_PINCHANGES //PinChangeInt setup
+#define NO_PORTC_PINCHANGES    //only port D pinchanges (see: http://playground.arduino.cc/Learning/Pins)
+#define PIN_COUNT 1    //number of channels attached to the reciver
+#define MAX_PIN_CHANGE_PINS PIN_COUNT
+
+#define RC_TURN 2    //arduino pins attached to the reciver
+#define RC_FWD 3
+#define RC_FIRE 4
+
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
 // Parameter 3 = pixel type flags, add together as needed:
@@ -14,21 +27,60 @@
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(20, PIN_6, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(20, PIN_7, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(20, PIN_8, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(20, PIN_9, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_top_left = Adafruit_NeoPixel(20, PIN_6, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_top_right = Adafruit_NeoPixel(20, PIN_7, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_bot_left = Adafruit_NeoPixel(20, PIN_8, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_bot_right = Adafruit_NeoPixel(20, PIN_9, NEO_GRB + NEO_KHZ800);
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
 // and minimize distance between Arduino and first pixel.  Avoid connecting
 // on a live circuit...if you must, connect GND first.
 
+//strip_top_left
+//strip_top_right
+//strip_bot_left
+//strip_bot_right
 
+byte pin[] = {RC_FWD};
+unsigned int time[] = {0,0,0};                // to the reciver's channels in the order listed here
 
+byte state=0;
+byte burp=0;    // a counter to see how many times the int has executed
+byte cmd=0;     // a place to put our serial data
+byte i=0;       // global counter for tracking what pin we are on
 
 void setup() {
-  strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
+  
+  strip_top_left.begin();
+  strip_top_right.begin();
+  strip_bot_left.begin();
+  strip_bot_right.begin();
+  
+  //strip.begin();
+  //strip.show(); // Initialize all pixels to 'off'
+  
+  strip_top_left.show();
+  strip_top_right.show();
+  strip_bot_left.show();
+  strip_bot_right.show();
+  
+  Serial.begin(115200);
+  Serial.print("PinChangeInt ReciverReading test");
+  Serial.println();            //warm up the serial port
+
+  Timer1.initialize(2200);    //longest pulse in PPM is usally 2.1 milliseconds,
+                                //pick a period that gives you a little headroom.
+  Timer1.stop();                //stop the counter
+  Timer1.restart();            //set the clock to zero
+
+  for (byte i=0; i<1; i++)
+  {
+      pinMode(pin[i], INPUT);     //set the pin to input
+      digitalWrite(pin[i], HIGH); //use the internal pullup resistor
+      PCintPort::attachInterrupt(pin[i], rise,RISING); // attach a PinChange Interrupt to our first pin
+      byte pin[] = {RC_FWD};
+  }
+  
 }
 
 void loop() {
@@ -151,58 +203,16 @@ Timer1 library to record the time between.
 
 
 */
-#include <PinChangeInt.h>    // http://playground.arduino.cc/Main/PinChangeInt
-#include <PinChangeIntConfig.h>
-#include <TimerOne.h>        // http://playground.arduino.cc/Code/Timer1
 
-#define NO_PORTB_PINCHANGES //PinChangeInt setup
-#define NO_PORTC_PINCHANGES    //only port D pinchanges (see: http://playground.arduino.cc/Learning/Pins)
-#define PIN_COUNT 3    //number of channels attached to the reciver
-#define MAX_PIN_CHANGE_PINS PIN_COUNT
-
-#define RC_TURN 2    //arduino pins attached to the reciver
-#define RC_FWD 3
-#define RC_FIRE 4
 //byte pin[] = {RC_FWD, RC_TURN, RC_FIRE};    //for maximum efficency thise pins should be attached
-byte pin[] = {RC_FWD};
-unsigned int time[] = {0,0,0};                // to the reciver's channels in the order listed here
-
-byte state=0;
-byte burp=0;    // a counter to see how many times the int has executed
-byte cmd=0;     // a place to put our serial data
-byte i=0;       // global counter for tracking what pin we are on
-
-void setup() {
-    Serial.begin(115200);
-    Serial.print("PinChangeInt ReciverReading test");
-    Serial.println();            //warm up the serial port
-
-    Timer1.initialize(2200);    //longest pulse in PPM is usally 2.1 milliseconds,
-                                //pick a period that gives you a little headroom.
-    Timer1.stop();                //stop the counter
-    Timer1.restart();            //set the clock to zero
-
-    for (byte i=0; i<1; i++)
-    {
-        pinMode(pin[i], INPUT);     //set the pin to input
-        digitalWrite(pin[i], HIGH); //use the internal pullup resistor
-        PCintPort::attachInterrupt(pin[i], rise,RISING); // attach a PinChange Interrupt to our first pin
-        byte pin[] = {RC_FWD};
-    }
-}
 
 void loop2() {
     cmd=Serial.read();        //while you got some time gimme a systems report
     if (cmd=='p')
     {
         Serial.print("time:\t");
-        for (byte i=0; i<PIN_COUNT;i++)
-        {
-            Serial.print(i,DEC);
-            Serial.print(":");
-            Serial.print(time[i],DEC);
-            Serial.print("\t");
-        }
+        Serial.print(time[i],DEC);
+        Serial.print("\t");
         Serial.print(burp, DEC);
         Serial.println();
 /*      Serial.print("\t");
@@ -213,24 +223,24 @@ void loop2() {
         Serial.println(ICR1, DEC);*/
     }
     cmd=0;
-    switch (state)
-    {
-        case RISING: //we have just seen a rising edge
-            PCintPort::detachInterrupt(pin[i]);
-            PCintPort::attachInterrupt(pin[i], fall, FALLING); //attach the falling end
-            state=255;
-            break;
-        case FALLING: //we just saw a falling edge
-            PCintPort::detachInterrupt(pin[i]);
-            i++;                //move to the next pin
-            i = i % PIN_COUNT;  //i ranges from 0 to PIN_COUNT
-            PCintPort::attachInterrupt(pin[i], rise,RISING);
-            state=255;
-            break;
-        /*default:
-            //do nothing
-            break;*/
-    }
+//    switch (state)
+//    {
+//        case RISING: //we have just seen a rising edge
+//            PCintPort::detachInterrupt(pin[i]);
+//            PCintPort::attachInterrupt(pin[i], fall, FALLING); //attach the falling end
+//            state=255;
+//            break;
+//        case FALLING: //we just saw a falling edge
+//            PCintPort::detachInterrupt(pin[i]);
+//            i++;                //move to the next pin
+//            i = i % PIN_COUNT;  //i ranges from 0 to PIN_COUNT
+//            PCintPort::attachInterrupt(pin[i], rise,RISING);
+//            state=255;
+//            break;
+//        /*default:
+//            //do nothing
+//            break;*/
+//    }
 }
 
 void rise()        //on the rising edge of the currently intresting pin
