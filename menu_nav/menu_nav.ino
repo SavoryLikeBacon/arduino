@@ -5,24 +5,31 @@
 #include <Encoder.h>
 LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 long oldPosition =  0;
+long newPosition = .5;
 int position_delta = 0;
 long temp_counter = 0;
 
-//state numbers
-#define st_main 1
-#define st_intensity 2
-#define st_color 3
-#define st_color_red 4
-#define st_color_green 5
-#define st_color_blue 6
-#define st_program 7
-#define st_dflt_intensity 8
-#define st_dflt_color 9
-#define st_dflt_red 10
-#define st_dflt_green 11
-#define st_dflt_blue 12
-#define st_save 13
-#define st_restore 14
+//state numbers for main menu
+//#define st_main 1
+#define st_intensity 1
+#define st_color 2
+#define st_program 3
+
+//state numbers for sub menu 1
+#define st_color_red 1
+#define st_color_green 2
+#define st_color_blue 3
+
+//state numbers for sub menu 2
+#define st_dflt_intensity 1
+#define st_dflt_color 2
+#define st_save 3
+#define st_restore 4
+
+//state numbers for sub menu 3
+#define st_dflt_red 1
+#define st_dflt_green 2
+#define st_dflt_blue 3
 
 
 //pin  for the hardware are listed below
@@ -30,16 +37,25 @@ const int red_led_pin = 9;
 const int green_led_pin = 5;
 const int blue_led_pin = 6;
 const int encoder_A_pin = 0;
-const int encoder_B_pin = 0;
+const int encoder_B_pin = 1;
 const int encoder_switch_pin = 4;
 
 
 
-int menu_state = 6; //this will hold the current state
-volatile int rotary_counter = 0;
+int menu_state = 1; //this will hold the current state
+volatile long rotary_counter = 0;
 boolean numeric_flag = false;
 boolean yes_no_flag = false;
 boolean menu_flag = true;
+boolean submenu1_flag = false;
+boolean submenu2_flag = false;
+boolean submenu3_flag = false;
+
+int main_menu_state = 1;
+int submain1_menu_state = 1;
+int submain2_menu_state = 1;
+int submain3_menu_state = 1;
+boolean current_yesno = false;
 volatile int button_service_waiting = 0;
 String inputString = "";
 
@@ -55,8 +71,8 @@ Encoder myEnc(encoder_A_pin, encoder_B_pin);
 void setup() {
   // put your setup code here, to run once:
   prep_IO(); // prepare the inputs and outputs
-  Timer1.initialize(1000000); // set a timer of length 100000 microseconds (or 0.1 sec - or 10Hz => the led will blink 5 times, 5 cycles of on-and-off, per second)
-  Timer1.attachInterrupt( timerIsr ); // attach the service routine here
+ // Timer1.initialize(1000000); // set a timer of length 100000 microseconds (or 0.1 sec - or 10Hz => the led will blink 5 times, 5 cycles of on-and-off, per second)
+  //Timer1.attachInterrupt( timerIsr ); // attach the service routine here
   lcd.init(); // initialize the lcd 
   lcd.backlight();
   //pinMode(13, OUTPUT);
@@ -77,40 +93,85 @@ void prep_IO(){
 
 
 void loop() {
-  // put your main code here, to run repeatedly:
+
   
-  delay(2000);
-  Serial.print("encoder counter: ");
-  Serial.println(rotary_counter);
+  delay(100);
+//  long first = millis();
   
+  get_position();
+  handle_encoder();
+  
+  if (digitalRead(encoder_switch_pin) == HIGH){
+    Serial.println("check for button being pressed");
+  }
+  
+  button_check();
+  if(menu_flag)
+     print_top_menu();
+    
+  if(submenu1_flag)
+     print_submenu1();
+
+  if(submenu2_flag)
+     print_submenu2();
+
+  if(submenu3_flag)
+     print_submenu3();
+ 
+  if (numeric_flag)
+    write_number();
+  
+  if (yes_no_flag)
+    lcd_yesno_update();
+
+
+  //Serial.print("sub menu state ");
+  //Serial.println(submain1_menu_state);
+//    long second = millis();
+//    Serial.print("time is ");
+//    Serial.print(second - first);
+//    Serial.println(" milliseconds");
+//    delay(5000);
+
 }
 
-//void button_check_loop() {
-//  //this will be removed when the encoder is connected
-//  while (Serial.available()) {
-//    // get the new byte:
-//    char inChar = (char)Serial.read(); 
-//    // add it to the inputString:
-//    inputString += inChar;
-//    // if the incoming character is a newline, set a flag
-//    // so the main loop can do something about it:  
-//    if (inChar == 'u')
-//      up_event();
-//    if (inChar == 'd')      
-//      down_event();
-//    if (inChar == 's')
-//      select_event();
-//    if (inChar ==  'b')        
-//      back_event();
-//  }
-//}
+void button_check(){
+  if (digitalRead(encoder_switch_pin) == HIGH){
+    Serial.println("before select_event function");
+    select_event(); 
+  }
+}
+
+
+void write_number(){
+  lcd.setCursor ( 13, 1 );
+  if ((rotary_counter >= 0) && (rotary_counter <= 9)){
+    lcd.print("  ");
+    lcd.print(rotary_counter);
+  }
+  if ((rotary_counter >= 10) && (rotary_counter <= 99)){
+    lcd.print(" ");
+    lcd.print(rotary_counter);
+  }
+  if (rotary_counter >= 100){
+    lcd.print(rotary_counter);
+  }
+  
+  //Serial.println(rotary_counter); 
+}
 
 void handle_encoder(){
-
+    
     if (position_delta > 0)
       up_event();
     if (position_delta < 0)      
       down_event();
+    
+    if (rotary_counter > 255)
+      rotary_counter= 255;
+    if (rotary_counter < 0)
+      rotary_counter= 0;
+        
       
     //read select and back switch
 //    if (inChar == 's')
@@ -141,8 +202,27 @@ void timerIsr()
 }
 
 void get_position(){
-  long rotary_encoder = myEnc.read()/4;
-  position_delta = rotary_encoder - oldPosition;
+  newPosition = (int )(myEnc.read()/4);
+
+  //if (newPosition != oldPosition) {
+    position_delta =  (newPosition - oldPosition);
+    rotary_counter += position_delta;
+    if (position_delta > 0)
+      up_event();
+    if (position_delta < 0)
+      down_event();
+    position_delta=0;
+    oldPosition = newPosition;
+  //}
+  
+//  Serial.print("new: ");
+//  Serial.print(newPosition);
+//  Serial.print("      old: ");
+//  Serial.print(oldPosition);
+//  Serial.print("      delta: ");
+//  Serial.print(position_delta);
+  //Serial.print("      counter: ");
+  //Serial.println(rotary_counter);
 }
 
 void lcd_counter_update(){
@@ -154,38 +234,141 @@ void lcd_counter_update(){
 
 void lcd_yesno_update(){
 //this function show the yes or no options when the user is going to select a boolean selector
+  lcd.setCursor ( 7 , 1 );
+  lcd.print("Save? ");
   if (oldPosition & 1){
+    lcd.print("Yes");
+    current_yesno = true;
     Serial.println("Yes");
   }else{
-    Serial.println("No");
+    lcd.print(" No");
+    current_yesno = false;
+    Serial.println(" No");
   }
 }
 
 
 
 void up_event(){
-  if (rotary_counter >= 255){
-     rotary_counter = 255;
-  }else{
-     rotary_counter++;
+  
+//  if (rotary_counter >= 255){
+//     rotary_counter = 255;
+//  }else{
+//     rotary_counter++;
+//  }
+
+if (!(numeric_flag || yes_no_flag)){
+//do not change sub menu when the above flags are set
+    if (menu_flag){
+      main_menu_state++;
+      if (main_menu_state==4)
+         main_menu_state = 1;
+    }
+  
+    if (submenu1_flag){
+      submain1_menu_state++;
+      if (submain1_menu_state==4)
+         submain1_menu_state = 1;
+    }  
+  
+    if (submenu2_flag){
+      submain2_menu_state++;
+      if (submain2_menu_state==5)
+         submain2_menu_state = 1;
+    } 
+ 
+    if (submenu3_flag){
+      submain3_menu_state++;
+      if (submain3_menu_state==4)
+         submain3_menu_state = 1;
+    }  
   }
-  //Serial.print("up ");
+  Serial.print("up ");
+  Serial.println(millis());
   //Serial.println(rotary_counter);
 }
 
 void down_event(){
-    if (rotary_counter <= 0){
-     rotary_counter = 0;
-  }else{
-     rotary_counter--;
-  }
-  //Serial.print("down ");
-  //Serial.println(rotary_counter);
+//    if (rotary_counter <= 0){
+//     rotary_counter = 0;
+//  }else{
+//     rotary_counter--;
+//  }
+
+boolean numeric_flag = true;
+boolean yes_no_flag = false;
   
+  if (!(numeric_flag || yes_no_flag)){
+   //stop changing the sub menu when the y/n flag is set or if the numeric flag is set
+
+  //increment the main menu
+    if (menu_flag){
+      main_menu_state--;
+      if (main_menu_state==0)
+         main_menu_state = 3;
+    }  
+  
+    if (submenu1_flag){
+      submain1_menu_state--;
+      if (submain1_menu_state==0)
+         submain1_menu_state = 3;
+    }  
+  
+    if (submenu2_flag){
+      submain2_menu_state--;
+      if (submain2_menu_state==0)
+         submain2_menu_state = 4;
+    }  
+
+    if (submenu3_flag){
+      submain3_menu_state--;
+      if (submain3_menu_state==0)
+         submain3_menu_state = 3;
+    }  
+  }
+    
+  Serial.print("down ");
+  Serial.println(millis());
+  //Serial.println(rotary_counter);
 }
 
 void select_event(){
-  Serial.println("select");
+  
+  if (menu_flag){
+//    #define st_intensity 1
+//    #define st_color 2
+//    #define st_program 3
+
+     switch (main_menu_state){
+       case st_intensity:
+//       menu_flag =  false;
+         numeric_flag = true; // turn on numeric display for user to select
+//       submenu1_flag = true;
+  	 break;
+       case st_color:
+         menu_flag =  false;
+  //     numeric_flag = true; // turn on numeric display for user to select
+         submenu1_flag = true;
+	 break;	
+       case st_program:
+         menu_flag =  false;
+  //     numeric_flag = true; // turn on numeric display for user to select
+         submenu2_flag = true;
+	 break;
+       default:   
+         delay(1);    
+     }    
+  }
+  
+  if (submenu1_flag){    
+  }    
+  if (submenu2_flag){    
+  }
+  if (submenu3_flag){
+  }
+ 
+  Serial.print("select  ");
+  Serial.println(millis());
 //  button_service_waiting = false;
 }
 
@@ -195,73 +378,119 @@ void back_event(){
 }
 
 
-void print_top_menu(){
+void print_submenu1(){
  //this function prints the top part of each menu  
   String temp_buffer;
-  switch (menu_state){
-      case st_main:
-        temp_buffer="Main Menu";
-        break;
-      
-      case st_intensity:
-     	temp_buffer="Intensity";
-	break;
-	
-      case st_color:
-	temp_buffer="Color";
-	break;
-	
+  //submain_menu_state %= 3;
+  switch (submain1_menu_state){
       case st_color_red:
-	temp_buffer="Red";
+	temp_buffer="  Red        ";
 	break;
 	
       case st_color_green:
-	temp_buffer="Green";
+	temp_buffer="  Green      ";
 	break;
 	
       case st_color_blue:
-	temp_buffer="Blue";
+	temp_buffer="  Blue       ";
 	break;
-	
-      case st_program:
-	temp_buffer="Program";
-	break;
-	
+
+      default:
+        temp_buffer="Dflt SubMenu1   "; 
+  }
+    lcd.setCursor ( 0, 0 );
+    lcd.print("Color           ");
+    lcd.setCursor ( 0, 1 );
+    lcd.print(temp_buffer);
+    //Serial.println(temp_buffer);
+}
+
+void print_submenu2(){
+ //this function prints the top part of each menu  
+  String temp_buffer;
+  //submain_menu_state %= 3;
+  switch (submain2_menu_state){
       case st_dflt_intensity:
-	temp_buffer="Default Inten";
+	temp_buffer="  Intensity     ";
 	break;
 	
       case st_dflt_color:
-	temp_buffer="Default Color";
+	temp_buffer="  Color         ";
 	break;
-	
-      case st_dflt_red:
-	temp_buffer="Default Red";
-	break;
-	
-      case st_dflt_green:
-	temp_buffer="Default Green";
-	break;
-	
-      case st_dflt_blue:
-	temp_buffer="Default Blue";
-	break;
-	
+
       case st_save:
-	temp_buffer="Save";
+	temp_buffer="  Save          ";
 	break;
 	
       case st_restore:
-	temp_buffer="Restore";
+	temp_buffer="  Restore       ";
 	break;
-        
+
       default:
-         temp_buffer="Default Menu"; 
-       
+         temp_buffer="Dflt SubMenu2  "; 
   }
+    lcd.setCursor ( 0, 0 );
+    lcd.print("Program         ");
     lcd.setCursor ( 0, 1 );
     lcd.print(temp_buffer);
-    Serial.println(temp_buffer);
+    //Serial.println(temp_buffer);
+}
+
+void print_submenu3(){
+ //this function prints the top part of each menu  
+  String temp_buffer;
+  //submain_menu_state %= 3;
+  switch (submain3_menu_state){
+      case st_dflt_red:
+	temp_buffer="  Red     ";
+	break;
+	
+      case st_dflt_green:
+	temp_buffer="  Green   ";
+	break;
+	
+      case st_dflt_blue:
+	temp_buffer="  Blue    ";
+	break;
+	
+      default:
+         temp_buffer="Dflt SubMenu3"; 
+  }
+    lcd.setCursor ( 0, 0 );
+    lcd.print("Default Color   ");
+    lcd.setCursor ( 0, 1 );
+    lcd.print(temp_buffer);
+    //Serial.println(temp_buffer);
+}
+
+void print_top_menu(){
+ //this function prints the top part of each menu  
+  String temp_buffer;
+  switch (main_menu_state){
+//      case st_main:
+//        temp_buffer="Main Menu       ";
+//        break;
+      
+      case st_intensity:
+     	temp_buffer="  Intensity     ";
+	break;
+	
+      case st_color:
+	temp_buffer="  Color         ";
+	break;
+	
+      case st_program:
+	temp_buffer="  Program       ";
+	break;
+	
+      default:
+         temp_buffer="Default Menu"; 
+  }
+    lcd.setCursor ( 0, 0 );
+    lcd.print("Main Menu       ");
+    lcd.setCursor ( 0, 1 );
+    lcd.print(temp_buffer);
+    //Serial.println(temp_buffer);
 }
 
 void show_number_select(){
