@@ -1,10 +1,4 @@
 void up_event(){
-  
-//  if (rotary_counter >= 255){
-//     rotary_counter = 255;
-//  }else{
-//     rotary_counter++;
-//  }
 
 if (!(numeric_flag || yes_no_flag)){
 //do not change sub menu when the above flags are set
@@ -32,10 +26,10 @@ if (!(numeric_flag || yes_no_flag)){
          submain3_menu_state = 1;
     }  
   }
-  Serial.print("up ");
-  Serial.print(millis());
-  Serial.print("    ");
-  Serial.println(rotary_counter);
+//  Serial.print("up ");
+//  Serial.print(millis());
+//  Serial.print("    ");
+//  Serial.println(rotary_counter);
 }
 
 void down_event(){
@@ -75,9 +69,9 @@ void down_event(){
     }  
   }
     
-  Serial.print("down ");
-  Serial.print(millis());
-  Serial.print("    ");
-  Serial.println(rotary_counter);
+//  Serial.print("down ");
+//  Serial.print(millis());
+//  Serial.print("    ");
+//  Serial.println(rotary_counter);
 
 }

@@ -1,3 +1,4 @@
+
 void print_submenu1(){
  //this function prints the top part of each menu  
   String temp_buffer;
@@ -33,29 +34,31 @@ void print_submenu2(){
  //this function prints the top part of each menu  
   String temp_buffer;
   //submain_menu_state %= 3;
-  switch (submain2_menu_state){
-      case st_dflt_intensity:
-	temp_buffer="  Intensity  ";
-	break;
-	
-      case st_dflt_color:
-	temp_buffer="  Color      ";
-	break;
-
-      case st_save:
-	temp_buffer="  Save       ";
-	break;
-	
-      case st_restore:
-	temp_buffer="  Restore    ";
-	break;
-      
-      case st_program_back:
-	temp_buffer="  back       ";
-	break;
-
-      default:
-         temp_buffer="Dflt SubMenu2  "; 
+  if (!yes_no_flag){
+    switch (submain2_menu_state){
+        case st_dflt_intensity:
+  	temp_buffer="  Intensity  ";
+  	break;
+  	
+        case st_dflt_color:
+  	temp_buffer="  Color      ";
+  	break;
+  
+        case st_save:
+  	temp_buffer="  Save       ";
+  	break;
+  	
+        case st_restore:
+  	temp_buffer="  Restore    ";
+  	break;
+        
+        case st_program_back:
+  	temp_buffer="  back       ";
+  	break;
+  
+        default:
+           temp_buffer="Dflt SubMenu2  "; 
+    }
   }
     lcd.setCursor ( 0, 0 );
     lcd.print("Program         ");
