@@ -145,7 +145,7 @@ void loop() {
   //delay(100);
 
   a = millis();
-  update_button_color();
+  //battery_check();
   get_position();
   handle_encoder();
   //print_loaded_memory();

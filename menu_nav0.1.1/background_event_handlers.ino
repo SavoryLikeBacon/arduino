@@ -126,11 +126,5 @@ void lcd_yesno_update(){
   }
 }
 
-void update_button_color(){
-  
-  analogWrite(red_led_pin, 255-current_red);
-  analogWrite(green_led_pin, 255-current_green);
-  analogWrite(blue_led_pin, 255-current_blue);
-  
-}
+
 

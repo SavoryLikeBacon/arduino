@@ -26,12 +26,24 @@ void update_lights(){
 //  Serial.println((int)temp_blue);
   
   
+  update_button_color((int)temp_red, (int)temp_green, (int)temp_blue);
+  
   color_update(driver_side_strip.Color((int)temp_red, (int)temp_green, (int)temp_blue));
+  
   
   
   driver_side_strip.show();
   passenger_side_strip.show();
   cover_strip.show();
+}
+
+
+void update_button_color(int red, int green, int  blue){
+  //the parameters are fed in with 255 being full insensity and 0 being off
+  analogWrite(red_led_pin, 255-current_red);
+  analogWrite(green_led_pin, 255-current_green);
+  analogWrite(blue_led_pin, 255-current_blue);
+  
 }
 
 void color_update(uint32_t c) {
