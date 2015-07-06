@@ -10,7 +10,10 @@
 //   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(60, STRIP_PIN, NEO_GRB + NEO_KHZ800);
+
+//Adafruit_NeoPixel strip = Adafruit_NeoPixel(60, STRIP_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(43, STRIP_PIN, NEO_GRB + NEO_KHZ800);
+
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
@@ -106,31 +109,36 @@ void loop(){
 void battery_check(){
    //Serial.println("in batterycheck");
    int bat_level=750;
+   int no_battery_connected = 400;
    int current_level = analogRead(battery_pin);
    Serial.print("current battery = ");
    Serial.println(current_level);
-   if( current_level < bat_level ){
-      colorWipe(0, 0);  // clear strip
-      while(1){
-         for(int i=0; i<5; i++){
-            digitalWrite(ledPin, HIGH);
-            strip.setPixelColor(0,strip.Color(10, 0, 0));
-            strip.show();
-            delay(500);
-            digitalWrite(ledPin, LOW);
-            strip.setPixelColor(0,strip.Color(0, 0, 0));
-            strip.show();
-            delay(500);
-         }
-         
-         set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-         sleep_enable();
-         sleep_cpu();
-         sleep_mode();            // here the device is actually put to sleep!!
-        
-      }  
- }
-    
+   if(current_level > no_battery_connected){
+     if( current_level < bat_level ){
+        colorWipe(0, 0);  // clear strip
+        while(1){
+           for(int i=0; i<5; i++){
+              digitalWrite(ledPin, HIGH);
+              strip.setPixelColor(0,strip.Color(10, 0, 0));
+              strip.show();
+              delay(500);
+              digitalWrite(ledPin, LOW);
+              strip.setPixelColor(0,strip.Color(0, 0, 0));
+              strip.show();
+              delay(500);
+           }
+           
+           set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+           sleep_enable();
+           sleep_cpu();
+           sleep_mode();            // here the device is actually put to sleep!!
+          
+        }  
+     }
+    }else{
+       Serial.print("Battery Bypass\t");
+       Serial.println(current_level);
+   }
 }
 
 void read_sensor(){
