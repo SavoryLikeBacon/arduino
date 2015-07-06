@@ -171,7 +171,8 @@ void loop() {
 
   update_lights();
   b = millis();
-  Serial.println(b-a);
+  Serial.print(b-a);
+  Serial.print("\t");
   
 }
 
