@@ -10,10 +10,7 @@
 //   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-
-//Adafruit_NeoPixel strip = Adafruit_NeoPixel(60, STRIP_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(43, STRIP_PIN, NEO_GRB + NEO_KHZ800);
-
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
@@ -52,7 +49,8 @@ int steps = 0;
 double counter = 0;
 
 
-double brightness[] = {100, 30, 15, 10, 8, 6, 2};
+//double brightness[] = {100, 30, 15, 10, 8, 6, 2};
+double brightness[] = {40, 10, 6, 2, 0, 0, 0};
 
 
 void setup() {
@@ -74,7 +72,7 @@ void setup() {
 }
 
 void intro(){
-    colorWipe(strip.Color(8,8,0), 20);
+  colorWipe(strip.Color(8,8,0), 20);
   theaterChase(strip.Color(8, 8, 0), 50);
   colorWipe(0, 0);
 }
@@ -106,40 +104,7 @@ void loop(){
   //delay(500); 
 }
 
-void battery_check(){
-   //Serial.println("in batterycheck");
-   int bat_level=750;
-   int no_battery_connected = 400;
-   int current_level = analogRead(battery_pin);
-   Serial.print("current battery = ");
-   Serial.println(current_level);
-   if(current_level > no_battery_connected){
-     if( current_level < bat_level ){
-        colorWipe(0, 0);  // clear strip
-        while(1){
-           for(int i=0; i<5; i++){
-              digitalWrite(ledPin, HIGH);
-              strip.setPixelColor(0,strip.Color(10, 0, 0));
-              strip.show();
-              delay(500);
-              digitalWrite(ledPin, LOW);
-              strip.setPixelColor(0,strip.Color(0, 0, 0));
-              strip.show();
-              delay(500);
-           }
-           
-           set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-           sleep_enable();
-           sleep_cpu();
-           sleep_mode();            // here the device is actually put to sleep!!
-          
-        }  
-     }
-    }else{
-       Serial.print("Battery Bypass\t");
-       Serial.println(current_level);
-   }
-}
+
 
 void read_sensor(){
   int temp_toe = 0;
@@ -170,35 +135,7 @@ void read_sensor(){
   //heel_bool = false; //no heel hooked up
 }
 
-void toe_hit(){
-    send_ball( 0, 29, 59, 30, 6); // in pulse
-    
-    strip.setPixelColor(30,strip.Color(0, 0, 0));
-    strip.setPixelColor(29,strip.Color(0, 0, 0));
-     strip.show();
-    //Serial.print("toe hit | ");
-    digitalWrite(ledPin, HIGH);
-    armed = true;
-    rearm();
-}
 
-void heel_hit(){
-    send_ball( 30, 60, 29, 0, 6); // out pulse
-    //Serial.print("heel hit | ");
-    digitalWrite(ledPin, HIGH);
-    armed = true;
-    rearm();
-}
-
-void back_and_forth(){
-    send_ball( 30, 60, 29, 0, 30); // out pulse
-    //Serial.print("heel hit | ");
-    digitalWrite(ledPin, HIGH);
-    
-    send_ball( 0, 29, 59, 30, 30); // in pulse
-    //Serial.print("toe hit | ");
-    digitalWrite(ledPin, LOW);   
-}
   
 
 void rearm(){
@@ -225,22 +162,7 @@ void rearm(){
 }
 
 
-// Fill the dots one after the other with a color
-void colorWipe(uint32_t c, uint8_t wait) {
-  for(uint16_t i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, c);
-      strip.show();
-      delay(wait);
-  }  
-}
 
-  
-void clear_strip(){
-     for(uint16_t i=0; i<strip.numPixels(); i++){
-        strip.setPixelColor(i, 0);
-     }
-     strip.show();
-}
 
 //start_bit0 to end_bit0 is accending
 //start_bit1 to end_bit1 is decending
@@ -294,38 +216,6 @@ void send_ball(int start_bit0, int end_bit0, int start_bit1, int end_bit1, int w
     }
 }
 
-
-void rainbowCycle(uint8_t wait) {
-  uint16_t i, j;
-
-  for(j=0; j<256*1; j++) { // 5 cycles of all colors on wheel
-    for(i=0; i< strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
-    }
-    strip.show();
-    delay(wait);
-  }
-}
-
-
-void theaterChase(uint32_t c, uint8_t wait) {
-  for (int j=0; j<10; j++) {  //do 10 cycles of chasing
-    for (int q=0; q < 3; q++) {
-      for (int i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, c);    //turn every third pixel on
-      }
-      strip.show();
-     
-      delay(wait);
-     
-      for (int i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, 0);        //turn every third pixel off
-      }
-    }
-  }
-}
-
-
 void fireball_belt(){
   if( analogRead(battery_pin) > 750 ){
      //Serial.print("analog is ");
@@ -346,14 +236,4 @@ void fireball_belt(){
   }  
 }
 
-uint32_t Wheel(byte WheelPos) {
-  if(WheelPos < 85) {
-   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-  } else if(WheelPos < 170) {
-   WheelPos -= 85;
-   return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-  } else {
-   WheelPos -= 170;
-   return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-  }
-}
+
