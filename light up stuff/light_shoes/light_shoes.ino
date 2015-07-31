@@ -81,12 +81,12 @@ void loop(){
   
   
   //heel_hit();
-  back_and_forth();
+  //back_and_forth();
   //toe_hit();
   //fireball_belt();
     
   //battery_check();
-  //read_sensor();
+  read_sensor();
   
   //DEBUG SERIAL CODE
   //Serial.print(toe_bool);
