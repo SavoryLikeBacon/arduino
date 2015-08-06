@@ -118,8 +118,8 @@ void read_sensor(){
   Serial.println(toe_value);
   // add a threshold for disarming
   if (armed == true){
-      temp_toe = thresh_toe + 50;
-      temp_heel= thresh_heel + 50;
+      temp_toe = thresh_toe + 100;
+      temp_heel= thresh_heel + 100;
   }else{
       temp_toe = thresh_toe;
       temp_heel = thresh_heel;
@@ -159,7 +159,7 @@ void rearm(){
      //Serial.println( toe_bool);
      //delay(500);
   }
-  delay(50); // wait for rearm
+  delay(10); // wait for rearm
   counter++;
   //Serial.print("rearmed ");
   //Serial.println(counter);
