@@ -35,8 +35,8 @@ const int battery_pin = A4; //voltage divider for battery
 const int ledPin = 13;
 //pin for LED strip data line is D6
 
-const int thresh_toe = 450;
-const int thresh_heel = 450;
+const int thresh_toe = 700;
+const int thresh_heel = 800;
 
 boolean toe_bool = false;
 boolean heel_bool = false;
@@ -69,6 +69,15 @@ void setup() {
       
   //delay(500);
   
+  //stupid stuff
+  
+  int toe_value = analogRead(toe_pin);
+  int heel_value = analogRead(heel_pin);
+  
+  if (toe_value < thresh_toe)
+    stupid_stuff_toe();
+  if (heel_value < thresh_heel)
+    stupid_stuff_heel();
 }
 
 void intro(){
