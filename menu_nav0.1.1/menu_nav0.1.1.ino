@@ -68,14 +68,16 @@ int current_intensity = 0;
 //pin  for the hardware are listed below
 
 //pin for the encoder LEDs
+//pins 9, 5 and 7
 const int red_led_pin = 9;
 const int green_led_pin = 5;
 const int blue_led_pin = 6;
 
 // data out lines for the three neo pixel strips
-const int driver_side_pin = 7;
-const int passenger_side_pin = 8;
-const int cover_pin = 10;
+//pins 7, 8 , and 10
+const int driver_side_pin = 8;
+const int passenger_side_pin = 10;
+const int cover_pin = 7; //third from lcd
 
 // encoder pins for the A, B, and the switch
 const int encoder_A_pin = 0;
@@ -110,9 +112,9 @@ long b = 0;
 //Objects
 LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 Encoder myEnc(encoder_A_pin, encoder_B_pin);
-Adafruit_NeoPixel driver_side_strip = Adafruit_NeoPixel(40, driver_side_pin, NEO_GRB + NEO_KHZ800); // driver side strip
-Adafruit_NeoPixel passenger_side_strip = Adafruit_NeoPixel(40, passenger_side_pin, NEO_GRB + NEO_KHZ800); // passenger side strip
-Adafruit_NeoPixel cover_strip = Adafruit_NeoPixel(60, cover_pin, NEO_GRB + NEO_KHZ800); // cover strip
+Adafruit_NeoPixel driver_side_strip = Adafruit_NeoPixel(67, driver_side_pin, NEO_GRB + NEO_KHZ800); // driver side strip
+Adafruit_NeoPixel passenger_side_strip = Adafruit_NeoPixel(67, passenger_side_pin, NEO_GRB + NEO_KHZ800); // passenger side strip
+Adafruit_NeoPixel cover_strip = Adafruit_NeoPixel(67, cover_pin, NEO_GRB + NEO_KHZ800); // cover strip
 
 
 void setup() {
